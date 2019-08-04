@@ -1,0 +1,230 @@
+This is a proof of concept version, and not ready to install without advanced skills!
+
+
+
+install on Proxmox Host:
+------------------------
+
+
+apt install pve-headers
+apt install pivccu-modules-dkms
+modprobe hb_rf_usb
+
+mkdir /usr/share/maticcom/
+cp /opt/maticcom/root/usr/share/maticcom/* -R /usr/share/maticcom/
+chmod 777 /usr/share/maticcom/bin/*
+
+ln /usr/share/maticcom/udevrules/99-maticcom.rules /etc/udev/rules.d/99-maticcom.rules.rules
+udevadm control --reload-rules && udevadm trigger
+
+/usr/share/maticcom/bin/container-configure.sh
+
+
+x86-CCU (development edition):
+------------------------------
+all modifications are implemented
+
+
+
+Container modifications debmatic:
+---------------------------------
+udev rules are not working inside lxc container
+/etc/udev/rules.d/99-debmatic.rules has to be differently implemented
+
+/usr/share/debmatic/bin/initsystem.sh
+add on top of script following code:
+lxc=`cat /proc/1/environ|grep lxc`
+
+if grep lxc /proc/1/environ -qa
+then
+        for file in `find /sys/dev/char/*`
+        do
+                data=`udevadm info $file -a`
+                data=`echo -n $data`
+
+                if [[ $data =~ 'ATTR{idVendor}=="1b1f"' ]] && [[ $data =~ 'ATTR{idProduct}=="c00f"' ]]
+                then
+                        datatemp=`udevadm info $file`
+                        datatemp=`echo -n $datatemp`
+                        temp=${file##*/}
+                        major=${temp%:*}
+                        minor=${temp#*:}
+                        temp=${datatemp#*DEVNAME=}
+                        temp=${temp%% *}
+                        path=${temp%/*}
+                        mkdir -p $path
+                        mknod $temp c $major $minor
+                fi
+
+                if [[ $data =~ 'ATTR{idVendor}=="1b1f"' ]] && [[ $data =~ 'ATTR{idProduct}=="c020"' ]]
+                then
+                        datatemp=`udevadm info $file`
+                        datatemp=`echo -n $datatemp`
+                        temp=${file##*/}
+                        major=${temp%:*}
+                        minor=${temp#*:}
+                        temp=${datatemp#*DEVNAME=}
+                        temp=${temp%% *}
+                        path=${temp%/*}
+                        mkdir -p $path
+                        mknod $temp c $major $minor
+                fi
+
+                if [[ $data =~ 'ATTR{idVendor}=="1b1f"' ]] && [[ $data =~ 'ATTR{idProduct}=="c020"' ]]
+                then
+                        datatemp=`udevadm info $file`
+                        datatemp=`echo -n $datatemp`
+                        temp=${file##*/}
+                        major=${temp%:*}
+                        minor=${temp#*:}
+                        temp=${datatemp#*DEVNAME=}
+                        temp=${temp%% *}
+                        path=${temp%/*}
+                        mkdir -p $path
+                        mknod $temp c $major $minor
+
+                        for file2 in `find -H /sys/bus/usb-serial/drivers/cp210x/* -type d`
+                        do
+                                data2=`udevadm info $file2 -a`
+                                data2=`echo -n $data2`
+
+                                if [[ $data2 =~ 'ATTRS{interface}=="eQ-3 HmIP-RFUSB"' ]] && [[ $file2 =~ '/tty/' ]]
+                                then
+                                        data2=`udevadm info $file2`
+                                        data2=`echo -n $data2`
+                                        temp=${data2##*MAJOR=}
+                                        major=${temp%% *}
+                                        temp=${data2##*MINOR=}
+                                        minor=${temp%% *}
+                                        temp=${data2#*DEVNAME=}
+                                        temp=${temp%% *}
+                                        path=${temp%/*}
+                                        mkdir -p $path
+                                        mknod $temp c $major $minor
+                                        break
+                                fi
+                        done
+                fi
+        done
+
+        data=`udevadm info -q property /sys/devices/virtual/eq3loop/eq3loop`
+        data=`echo -n $data`
+        temp=${data#*MAJOR=}
+        major=${temp%% *}
+        temp=${data#*MINOR=}
+        minor=${temp%% *}
+        temp=${data#*DEVNAME=}
+        device=${temp%% *}
+        path=${device%/*}
+        mkdir -p $path
+        mknod $device c $major $minor
+
+        data=`udevadm info -q property /sys/devices/virtual/raw-uart/raw-uart`
+        data=`echo -n $data`
+        temp=${data#*MAJOR=}
+        major=${temp%% *}
+        temp=${data#*MINOR=}
+        minor=${temp%% *}
+        temp=${data#*DEVNAME=}
+        device=${temp%% *}
+        path=${device%/*}
+        mkdir -p $path
+        mknod $device c $major $minor
+fi
+
+
+
+
+
+
+
+
+/usr/share/debmatic/bin/start_multimacd.sh
+add after multimac start code (end of file):
+
+if grep lxc /proc/1/environ -qa
+then
+	for i in $(seq 1 20)
+	do
+		sleep 1
+
+		if [ -d "/sys/devices/virtual/eq3loop/mmd_bidcos" ]
+		then
+			data=`udevadm info -q property /sys/devices/virtual/eq3loop/mmd_bidcos`
+			data=`echo -n $data`
+			temp=${data#*MAJOR=}
+			major=${temp%% *}
+			temp=${data#*MINOR=}
+			minor=${temp%% *}
+			temp=${data#*DEVNAME=}
+			device=${temp%% *}
+			path=${device%/*}
+			mkdir -p $path
+			mknod $device c $major $minor
+			break
+		fi
+	done
+
+	for i in $(seq 1 20)
+	do
+		sleep 1
+
+		if [ -d "/sys/devices/virtual/eq3loop/mmd_hmip" ]
+		then
+			data=`udevadm info -q property /sys/devices/virtual/eq3loop/mmd_hmip`
+			data=`echo -n $data`
+			temp=${data#*MAJOR=}
+			major=${temp%% *}
+			temp=${data#*MINOR=}
+			minor=${temp%% *}
+			temp=${data#*DEVNAME=}
+			device=${temp%% *}
+			path=${device%/*}
+			mkdir -p $path
+			mknod $device c $major $minor
+			break
+		fi
+	done
+fi
+
+
+
+what's working:
+---------------
+Device forwarding from host to container even if container is running (hotplug)
+
+tested:
+-------
+Proxmox 6.0-4 (kernel 5.0.15-1-pve)
+hmip_rfusb
+hm_cfg_usb
+hb-rf-usb with rpi-rf-mod 
+
+bidcos rf
+bidcos wired
+hmip rf
+
+lxc container has to be configured as previliged
+
+todo:
+-----
+rewrite hss_led:
+forward hss_led hw to conatiner in subfolder: e.g.
+lxc.mount.entry: /sys/class/leds/ opt/hw/leds/ none bind,optional,rw,create=dir
+
+nasty workaround to get hss_led running inside container:
+lxc.apparmor.profile: unconfined
+
+to be discussed:
+reset hmip_rfusb inside container or from host. Current implementation is reset on host while container start
+if inside, device has to be forwarded:
+lxc.mount.entry: /sys/devices/virtual/raw-uart/raw-uart/reset_radio_module opt/hw/raw-uart/reset_radio_module none bind,rw,optional,create=file
+or complete device
+lxc.mount.entry: /sys/devices/virtual/raw-uart/raw-uart/ opt/hw/raw-uart/ none bind,rw,optional,create=dir
+
+structure:
+----------
+"backup" folder includes lxc config generated before modifications (desaster-recovery)
+"id" includes container id
+
+
