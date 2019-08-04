@@ -33,8 +33,6 @@ udev rules are not working inside lxc container
 
 /usr/share/debmatic/bin/initsystem.sh
 add on top of script following code:
-lxc=`cat /proc/1/environ|grep lxc`
-
 if grep lxc /proc/1/environ -qa
 then
         for file in `find /sys/dev/char/*`
@@ -226,5 +224,3 @@ structure:
 ----------
 "backup" folder includes lxc config generated before modifications (desaster-recovery)
 "id" includes container id
-
-
