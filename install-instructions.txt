@@ -14,7 +14,6 @@ mkdir /usr/share/maticcom/
 cp /opt/maticcom/root/usr/share/maticcom/* -R /usr/share/maticcom/
 chmod 777 /usr/share/maticcom/bin/*
 
-ln /usr/share/maticcom/udevrules/99-maticcom.rules /etc/udev/rules.d/99-maticcom.rules.rules
 udevadm control --reload-rules && udevadm trigger
 
 /usr/share/maticcom/bin/container-configure.sh
