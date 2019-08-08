@@ -32,7 +32,9 @@ udev rules are not working inside lxc container
 
 /usr/share/debmatic/bin/initsystem.sh
 add on top of script following code:
-if grep lxc /proc/1/environ -qa
+virt=`systemd-detect-virt`
+
+if [ $virt = "lxc" ]
 then
         for file in `find /sys/dev/char/*`
         do
@@ -139,7 +141,9 @@ fi
 /usr/share/debmatic/bin/start_multimacd.sh
 add after multimac start code (end of file):
 
-if grep lxc /proc/1/environ -qa
+virt=`systemd-detect-virt`
+
+if [ $virt = "lxc" ]
 then
 	for i in $(seq 1 20)
 	do
@@ -147,17 +151,8 @@ then
 
 		if [ -d "/sys/devices/virtual/eq3loop/mmd_bidcos" ]
 		then
-			data=`udevadm info -q property /sys/devices/virtual/eq3loop/mmd_bidcos`
-			data=`echo -n $data`
-			temp=${data#*MAJOR=}
-			major=${temp%% *}
-			temp=${data#*MINOR=}
-			minor=${temp%% *}
-			temp=${data#*DEVNAME=}
-			device=${temp%% *}
-			path=${device%/*}
-			mkdir -p $path
-			mknod $device c $major $minor
+                        id=`cat /sys/devices/virtual/eq3loop/mmd_bidcos/dev`
+                        mknod /dev/mmd_bidcos c $id
 			break
 		fi
 	done
@@ -168,17 +163,8 @@ then
 
 		if [ -d "/sys/devices/virtual/eq3loop/mmd_hmip" ]
 		then
-			data=`udevadm info -q property /sys/devices/virtual/eq3loop/mmd_hmip`
-			data=`echo -n $data`
-			temp=${data#*MAJOR=}
-			major=${temp%% *}
-			temp=${data#*MINOR=}
-			minor=${temp%% *}
-			temp=${data#*DEVNAME=}
-			device=${temp%% *}
-			path=${device%/*}
-			mkdir -p $path
-			mknod $device c $major $minor
+                        id=`cat /sys/devices/virtual/eq3loop/mmd_hmip/dev`
+                        mknod /dev/mmd_hmip c $id
 			break
 		fi
 	done

@@ -21,7 +21,7 @@ then
 
 	cp '/etc/pve/lxc/'$containerid'.conf' '/usr/share/maticcom/backups/'$timestamp'_'$containerid'.conf'
 
-	data=`cat /etc/pve/lxc/300.conf`
+	data=`cat /etc/pve/lxc/$containerid.conf`
 
         if ! [[ $data =~ "lxc.hook.pre-mount: /usr/share/maticcom/bin/container-start.sh" ]]
         then
