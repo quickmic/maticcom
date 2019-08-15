@@ -152,6 +152,7 @@ then
 		if [ -d "/sys/devices/virtual/eq3loop/mmd_bidcos" ]
 		then
                         id=`cat /sys/devices/virtual/eq3loop/mmd_bidcos/dev`
+                        id=${id//:/ }
                         mknod /dev/mmd_bidcos c $id
 			break
 		fi
@@ -164,6 +165,7 @@ then
 		if [ -d "/sys/devices/virtual/eq3loop/mmd_hmip" ]
 		then
                         id=`cat /sys/devices/virtual/eq3loop/mmd_hmip/dev`
+                        id=${id//:/ }
                         mknod /dev/mmd_hmip c $id
 			break
 		fi
